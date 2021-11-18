@@ -23,15 +23,29 @@
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
 ## Description
+A simple and easy to use GraphQL based API with NestJS. 
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+In the ```src``` directory, there are 4 CSV files, the application will on runtime read and build tables in the database for products, categories, subcategories and sellers information from three CSV files: ```cats.csv```, ```subcats.csv```, ```sellers.csv```. A fourth file, ```Aljazera_Stores_Products.csv``` corresponds to products for that particular seller.
+
+The information had been scrapped from the web for learning purposes only.
 
 ## Installation
+
+Firstly run a:
 
 ```bash
 $ npm install
 ```
 
+Add a ```.env``` file and place the following properties line by line:
+- ```DB_PORT=5432```
+- ```DB_HOST=localhost```
+- ```DB_NAME=postgres or <Your DB Name>```
+- ```DB_USERNAME=postgres or <Your DB Username>```
+- ```DB_PASSWORD=<LOCAL DB SERVER PASSWORD>```
+
+The NestJS app will use the ```.env``` file to pick up the development environment properties.
+  
 ## Running the app
 
 ```bash
