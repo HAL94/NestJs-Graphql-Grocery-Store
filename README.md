@@ -29,7 +29,7 @@ In the ```src``` directory, there are 4 CSV files, the application will on runti
 
 The information had been scrapped from the web for learning purposes only.
 
-![Sample](graphql_animation.gif) / ! [](graphql_animation.gif)
+![Sample](graphql_animation.gif)  [](graphql_animation.gif)
 
 ## Installation
 
