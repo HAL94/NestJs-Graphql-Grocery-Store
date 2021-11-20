@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from 'src/categories/models/category.entity';
 import { Seller } from 'src/sellers/models/seller.entity';
 import { Subcategory } from 'src/subcategories/subcategory.entity';
-import { Repository } from 'typeorm';
+import { getConnection, Repository } from 'typeorm';
 import { CreateProductInput } from './dto/input/create-product.input';
 import { DeleteProductInput } from './dto/input/delete-product.input';
 import { UpdateProductInput } from './dto/input/update-product.input';
@@ -38,16 +38,13 @@ export class ProductService {
             product.productPrice = createProductData.productPrice;
             product.productOfferPrice = createProductData.productOfferPrice;
 
-            const productSeller = new Seller();
-            productSeller.id = createProductData.productSeller;
+            const productSeller = await getConnection().manager.findOne(Seller, {id: createProductData.productSeller});
             product.productSeller = productSeller;
 
-            const productCategory = new Category();
-            productCategory.id = createProductData.productCategory;
+            const productCategory = await getConnection().manager.findOne(Category, {id: createProductData.productCategory});            
             product.productCategory = productCategory;
             
-            const productSubcategory = new Subcategory();
-            productSubcategory.id = createProductData.productSubcategory;
+            const productSubcategory = await getConnection().manager.findOne(Subcategory, {id: createProductData.productSubcategory});
             product.productSubcategory = productSubcategory;
 
             await this.productRepository.save(product);
@@ -63,33 +60,58 @@ export class ProductService {
     async updateProduct(updateProductData: UpdateProductInput) {
         try {
             const product = await this.productRepository.findOne({id: updateProductData.id}, {relations: ['productSeller', 'productSubcategory', 'productCategory']});
+            console.log('fetched product');
             if (product) {
+                if (updateProductData.productSubcategory && !updateProductData.productCategory) {
+                    throw new HttpException(`Please specifiy the 'productCategory' field`, HttpStatus.BAD_REQUEST);
+                }
+                
+                if (!updateProductData.productSubcategory && updateProductData.productCategory) {
+                    throw new HttpException(`Please specifiy the 'productSubcategory' field`, HttpStatus.BAD_REQUEST);
+                }
+                
+                product.productTitle = updateProductData.productTitle ? updateProductData.productTitle : product.productTitle;
+                product.productImage = updateProductData.productImage ? updateProductData.productImage : product.productImage;
+                product.productPrice = updateProductData.productPrice ? updateProductData.productPrice : product.productPrice;
+                product.productOfferPrice = updateProductData.productOfferPrice ? updateProductData.productOfferPrice : product.productOfferPrice;
 
-                product.productTitle = updateProductData.productTitle;
-                product.productImage = updateProductData.productImage;
-                product.productPrice = updateProductData.productPrice;
-                product.productOfferPrice = updateProductData.productOfferPrice;    
-                product.productSeller.id = updateProductData.productSeller;
-                product.productCategory.id = updateProductData.productCategory;
-                product.productSubcategory.id = updateProductData.productSubcategory;
+                product.productSeller = updateProductData.productSeller ? await getConnection().manager.findOne(Seller, {id: updateProductData.productSeller}) : product.productSeller;
+                
+                
+
+                if (updateProductData.productCategory) {
+                    const catId = updateProductData.productCategory ? updateProductData.productCategory : product.productCategory.id;
+                    const category = await getConnection().manager.findOne(Category, {id: catId}, {relations: ["subcategory"]});
+                    product.productCategory = category;
+
+                    if (updateProductData.productSubcategory) {
+                        const subcatId = updateProductData.productSubcategory ? updateProductData.productSubcategory : product.productSubcategory.id;
+                        const subcat = category.subcategory.find((subCat: Subcategory) => subCat.id === subcatId);
+                        if (subcat) {
+                            product.productSubcategory = subcat;
+                        } else {
+                            throw new HttpException(`Could not link subcategory with id: '${subcatId}' in a non-related category`, HttpStatus.BAD_REQUEST);
+                        }
+                    }
+
+                }
 
                 await this.productRepository.save(product);
     
                 return product;
             }
 
-            return new HttpException(`Could not find the product with id: ${updateProductData.id}`,
-             HttpStatus.NOT_FOUND);
+            return new Error(`Could not find the product with id: ${updateProductData.id}`);
 
         } catch (error) {
-            console.log(error);
-            throw new HttpException(`Something Went Wrong: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+            console.log(error.status);
+            throw new HttpException(`Something Went Wrong: ${error.message}`, HttpStatus[String(error.status)]);
         }
     }
 
     async deleteProduct(deleteProductInput: DeleteProductInput) {
         try {
-            const product = await this.productRepository.findOne({id: deleteProductInput.id});
+            const product = await this.productRepository.findOne({id: deleteProductInput.id}, {'relations': ['productSeller', 'productCategory', 'productSubcategory']});
             
             await this.productRepository.delete({id: product.id});
 

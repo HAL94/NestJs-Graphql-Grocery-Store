@@ -1,42 +1,44 @@
 import { Field, InputType } from "@nestjs/graphql";
-import { IsNotEmpty, NotEquals } from "class-validator";
+import { IsNotEmpty, IsOptional, NotEquals } from "class-validator";
 
 @InputType()
 export class UpdateProductInput {
-    @Field()
+    @Field({nullable: false})
     @IsNotEmpty()
     id: number;
     
-    @Field({nullable: false})
+    @Field({nullable: true})
+    @IsOptional()
     @IsNotEmpty()
     productTitle: string;
 
-    @Field({nullable: false})
-    @IsNotEmpty()
-    @NotEquals(0)
+    @Field({nullable: true})
+    @IsOptional()
+    @IsNotEmpty()    
     productImage: string;
 
-    @Field({nullable: false})
+    @Field({nullable: true})
+    @IsOptional()
     @IsNotEmpty()
-    @NotEquals(0)
     productPrice: number;
     
-    @Field({nullable: false})
+    @Field({nullable: true})
+    @IsOptional()
     @IsNotEmpty()
     productOfferPrice: number;
 
-    @Field({nullable: false})
-    @IsNotEmpty()
+    @Field({nullable: true})
+    @IsOptional()
     @NotEquals(0)
     productCategory: number
     
-    @Field({nullable: false})
-    @IsNotEmpty()
+    @Field({nullable: true})
+    @IsOptional()
     @NotEquals(0)
     productSubcategory: number;
  
-    @Field({nullable: false})
-    @IsNotEmpty()
+    @Field({nullable: true})
+    @IsOptional()
     @NotEquals(0)
     productSeller: number;
 }
