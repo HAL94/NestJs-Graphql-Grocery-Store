@@ -4,6 +4,7 @@ import { Seller } from "src/sellers/models/seller.entity";
 import { Subcategory } from "src/subcategories/subcategory.entity";
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
+
 @ObjectType()
 @Entity('products')
 export class Product {

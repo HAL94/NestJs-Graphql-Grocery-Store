@@ -38,13 +38,25 @@ export class ProductService {
             product.productPrice = createProductData.productPrice;
             product.productOfferPrice = createProductData.productOfferPrice;
 
-            const productSeller = await getConnection().manager.findOne(Seller, {id: createProductData.productSeller});
+            const productSeller = await getConnection().manager.findOne(Seller, {id: createProductData.productSeller}); 
+            if (!productSeller) {
+                throw new HttpException(`Product seller 'Id' not recognized`, HttpStatus.BAD_REQUEST);
+            }
+            
             product.productSeller = productSeller;
 
-            const productCategory = await getConnection().manager.findOne(Category, {id: createProductData.productCategory});            
+            const productCategory = await getConnection().manager.findOne(Category, {id: createProductData.productCategory}, {relations: ['subcategory']});            
+            if (!productCategory) {
+                throw new HttpException(`Product category 'Id' not recognized`, HttpStatus.BAD_REQUEST);
+            }
             product.productCategory = productCategory;
             
-            const productSubcategory = await getConnection().manager.findOne(Subcategory, {id: createProductData.productSubcategory});
+            const productSubcategory = productCategory.subcategory.find(subcat => subcat.id === createProductData.productSubcategory);
+            
+            if (!productSubcategory) {
+                throw new HttpException(`Product subcateogry with id '${createProductData.productSubcategory}' is not a child of the product category with id '${createProductData.productCategory}' `, HttpStatus.BAD_REQUEST);
+            }
+
             product.productSubcategory = productSubcategory;
 
             await this.productRepository.save(product);
@@ -53,7 +65,7 @@ export class ProductService {
 
         } catch (error) {
             console.log(error);
-            throw new HttpException(`Something Went Wrong: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new HttpException(`Something Went Wrong: ${error.message}`, HttpStatus[String(error.status)]);
         }
     }
 
